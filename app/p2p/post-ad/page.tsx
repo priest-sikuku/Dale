@@ -12,17 +12,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
-import { ArrowLeft, TrendingUp, Lock } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function PostAdPage() {
   const router = useRouter()
   const [adType, setAdType] = useState<"buy" | "sell">("sell")
   const [loading, setLoading] = useState(false)
-  const [currentAFXPrice, setCurrentAFXPrice] = useState<number>(16)
+  const [currentGXPrice, setCurrentGXPrice] = useState<number>(16)
   const [formData, setFormData] = useState({
-    afxAmount: "",
-    pricePerAFX: "",
+    gxAmount: "",
+    pricePerGX: "",
     minAmount: "",
     maxAmount: "",
     accountNumber: "",
@@ -37,21 +37,21 @@ export default function PostAdPage() {
   })
 
   useEffect(() => {
-    const fetchAFXPrice = async () => {
+    const fetchGXPrice = async () => {
       const supabase = createClient()
       const { data, error } = await supabase.from("gx_current_price").select("price").single()
 
       if (!error && data) {
-        setCurrentAFXPrice(data.price)
-        setFormData((prev) => ({ ...prev, pricePerAFX: data.price.toString() }))
+        setCurrentGXPrice(data.price)
+        setFormData((prev) => ({ ...prev, pricePerGX: data.price.toString() }))
       }
     }
 
-    fetchAFXPrice()
+    fetchGXPrice()
   }, [])
 
-  const minAllowedPrice = (currentAFXPrice * 0.96).toFixed(2)
-  const maxAllowedPrice = (currentAFXPrice * 1.04).toFixed(2)
+  const minAllowedPrice = (currentGXPrice * 0.96).toFixed(2)
+  const maxAllowedPrice = (currentGXPrice * 1.04).toFixed(2)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,14 +60,14 @@ export default function PostAdPage() {
     try {
       const supabase = createClient()
 
-      if (Number.parseFloat(formData.afxAmount) < 50) {
-        alert("Minimum amount to post an ad is 50 AFX")
+      if (Number.parseFloat(formData.gxAmount) < 50) {
+        alert("Minimum amount to post an ad is 50 GX")
         setLoading(false)
         return
       }
 
-      const pricePerAFX = Number.parseFloat(formData.pricePerAFX)
-      if (pricePerAFX < Number.parseFloat(minAllowedPrice) || pricePerAFX > Number.parseFloat(maxAllowedPrice)) {
+      const pricePerGX = Number.parseFloat(formData.pricePerGX)
+      if (pricePerGX < Number.parseFloat(minAllowedPrice) || pricePerGX > Number.parseFloat(maxAllowedPrice)) {
         alert(`Price must be between ${minAllowedPrice} and ${maxAllowedPrice} KES (±4% of current price)`)
         setLoading(false)
         return
@@ -94,8 +94,8 @@ export default function PostAdPage() {
       if (adType === "sell") {
         const { data, error } = await supabase.rpc("post_sell_ad_with_escrow", {
           p_user_id: user.id,
-          p_gx_amount: Number.parseFloat(formData.afxAmount),
-          p_price_per_gx: pricePerAFX,
+          p_gx_amount: Number.parseFloat(formData.gxAmount),
+          p_price_per_gx: pricePerGX,
           p_min_amount: Number.parseFloat(formData.minAmount),
           p_max_amount: Number.parseFloat(formData.maxAmount),
           p_account_number: formData.accountNumber || null,
@@ -119,9 +119,9 @@ export default function PostAdPage() {
           .insert({
             user_id: user.id,
             ad_type: adType,
-            gx_amount: Number.parseFloat(formData.afxAmount),
-            remaining_amount: Number.parseFloat(formData.afxAmount),
-            price_per_gx: pricePerAFX,
+            gx_amount: Number.parseFloat(formData.gxAmount),
+            remaining_amount: Number.parseFloat(formData.gxAmount),
+            price_per_gx: pricePerGX,
             min_amount: Number.parseFloat(formData.minAmount),
             max_amount: Number.parseFloat(formData.maxAmount),
             account_number: paymentMethodsString || null,
@@ -151,271 +151,201 @@ export default function PostAdPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1">
-        <div className="max-w-4xl mx-auto px-6 py-12">
-          <Button
-            variant="ghost"
-            className="mb-8 hover:bg-white/5 transition flex items-center gap-2"
-            onClick={() => router.push("/p2p")}
-          >
-            <ArrowLeft size={20} />
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <Button variant="ghost" className="mb-6 hover:bg-white/5 transition" onClick={() => router.push("/p2p")}>
+            <ArrowLeft size={20} className="mr-2" />
             Back to P2P Market
           </Button>
 
-          <div className="mb-12">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-3 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30">
-                <TrendingUp size={24} className="text-green-400" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold text-white">Create Your Ad</h1>
-              </div>
-            </div>
-            <p className="text-gray-400 ml-14">Set your prices and connect with traders (Minimum: 50 AFX)</p>
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">Post an Ad</h1>
+            <p className="text-gray-400">Create a buy or sell ad for GX coins (Minimum: 50 GX)</p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Form */}
-            <div className="lg:col-span-2">
-              <form
-                onSubmit={handleSubmit}
-                className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-8 rounded-2xl border border-white/10 backdrop-blur-xl space-y-6"
+          <form onSubmit={handleSubmit} className="glass-card p-8 rounded-xl border border-white/10 space-y-6">
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Ad Type</Label>
+              <RadioGroup
+                value={adType}
+                onValueChange={(value) => setAdType(value as "buy" | "sell")}
+                className="flex gap-4"
               >
-                {/* Ad Type Section */}
-                <div className="space-y-3 pb-6 border-b border-white/10">
-                  <Label className="text-base font-semibold text-white">Ad Type</Label>
-                  <RadioGroup
-                    value={adType}
-                    onValueChange={(value) => setAdType(value as "buy" | "sell")}
-                    className="flex gap-6"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="buy" id="buy" />
-                      <Label htmlFor="buy" className="cursor-pointer text-gray-300 hover:text-white transition">
-                        🔵 Buy AFX
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="sell" id="sell" />
-                      <Label htmlFor="sell" className="cursor-pointer text-gray-300 hover:text-white transition">
-                        📤 Sell AFX
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Amount Section */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="afxAmount" className="text-sm font-semibold text-white flex items-center gap-2">
-                      <TrendingUp size={16} className="text-green-400" />
-                      Amount of AFX * (Minimum: 50)
-                    </Label>
-                    <Input
-                      id="afxAmount"
-                      type="number"
-                      step="0.01"
-                      min="50"
-                      placeholder="Enter AFX amount"
-                      value={formData.afxAmount}
-                      onChange={(e) => setFormData({ ...formData, afxAmount: e.target.value })}
-                      required
-                      className="bg-white/5 border border-white/10 text-white placeholder-gray-500"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="pricePerAFX" className="text-sm font-semibold text-white">
-                      Price per AFX (KES) *
-                    </Label>
-                    <Input
-                      id="pricePerAFX"
-                      type="number"
-                      step="0.01"
-                      min={minAllowedPrice}
-                      max={maxAllowedPrice}
-                      placeholder={`Between ${minAllowedPrice} - ${maxAllowedPrice}`}
-                      value={formData.pricePerAFX}
-                      onChange={(e) => setFormData({ ...formData, pricePerAFX: e.target.value })}
-                      required
-                      className="bg-white/5 border border-white/10 text-white placeholder-gray-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
-                  <p className="text-xs text-blue-300">
-                    Current AFX price: <span className="font-bold">{currentAFXPrice} KES</span> • Allowed range:{" "}
-                    {minAllowedPrice} - {maxAllowedPrice} KES (±4%)
-                  </p>
-                </div>
-
-                {/* Min/Max Section */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="minAmount" className="text-sm font-semibold text-white">
-                      Min Amount (AFX) * (Minimum: 2)
-                    </Label>
-                    <Input
-                      id="minAmount"
-                      type="number"
-                      step="0.01"
-                      min="2"
-                      placeholder="Minimum"
-                      value={formData.minAmount}
-                      onChange={(e) => setFormData({ ...formData, minAmount: e.target.value })}
-                      required
-                      className="bg-white/5 border border-white/10 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="maxAmount" className="text-sm font-semibold text-white">
-                      Max Amount (AFX) *
-                    </Label>
-                    <Input
-                      id="maxAmount"
-                      type="number"
-                      step="0.01"
-                      placeholder="Maximum"
-                      value={formData.maxAmount}
-                      onChange={(e) => setFormData({ ...formData, maxAmount: e.target.value })}
-                      required
-                      className="bg-white/5 border border-white/10 text-white"
-                    />
-                  </div>
-                </div>
-
-                {/* Payment Methods */}
-                <div className="space-y-4 pt-4 border-t border-white/10">
-                  <h3 className="text-lg font-semibold text-white">Payment Methods</h3>
-
-                  {adType === "buy" ? (
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { id: "mpesa", label: "M-Pesa" },
-                        { id: "bankTransfer", label: "Bank Transfer" },
-                        { id: "paybill", label: "M-Pesa Paybill" },
-                        { id: "airtelMoney", label: "Airtel Money" },
-                      ].map((method) => (
-                        <div
-                          key={method.id}
-                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-white/5 transition"
-                        >
-                          <Checkbox
-                            id={method.id}
-                            checked={paymentMethods[method.id as keyof typeof paymentMethods]}
-                            onCheckedChange={(checked) =>
-                              setPaymentMethods({
-                                ...paymentMethods,
-                                [method.id]: checked as boolean,
-                              })
-                            }
-                          />
-                          <Label htmlFor={method.id} className="cursor-pointer text-gray-300">
-                            {method.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Label htmlFor="accountNumber" className="text-sm font-semibold text-white">
-                        Account Number / Payment Details
-                      </Label>
-                      <Input
-                        id="accountNumber"
-                        type="text"
-                        placeholder="Enter your payment details"
-                        value={formData.accountNumber}
-                        onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                        className="bg-white/5 border border-white/10 text-white"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Terms of Trade */}
-                <div className="space-y-2 pt-4 border-t border-white/10">
-                  <Label htmlFor="termsOfTrade" className="text-sm font-semibold text-white">
-                    Terms of Trade
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="buy" id="buy" />
+                  <Label htmlFor="buy" className="cursor-pointer">
+                    Buy GX
                   </Label>
-                  <Textarea
-                    id="termsOfTrade"
-                    placeholder="Enter your terms and conditions..."
-                    rows={3}
-                    value={formData.termsOfTrade}
-                    onChange={(e) => setFormData({ ...formData, termsOfTrade: e.target.value })}
-                    className="bg-white/5 border border-white/10 text-white placeholder-gray-500 resize-none"
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="sell" id="sell" />
+                  <Label htmlFor="sell" className="cursor-pointer">
+                    Sell GX
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gxAmount">Amount of GX * (Minimum: 50 GX)</Label>
+              <Input
+                id="gxAmount"
+                type="number"
+                step="0.01"
+                min="50"
+                placeholder="Enter GX amount (min 50)"
+                value={formData.gxAmount}
+                onChange={(e) => setFormData({ ...formData, gxAmount: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pricePerGX">Price per GX (KES) *</Label>
+              <Input
+                id="pricePerGX"
+                type="number"
+                step="0.01"
+                min={minAllowedPrice}
+                max={maxAllowedPrice}
+                placeholder={`Between ${minAllowedPrice} - ${maxAllowedPrice} KES`}
+                value={formData.pricePerGX}
+                onChange={(e) => setFormData({ ...formData, pricePerGX: e.target.value })}
+                required
+              />
+              <p className="text-xs text-gray-400">
+                Current GX price: {currentGXPrice} KES. Allowed range: {minAllowedPrice} - {maxAllowedPrice} KES (±4%)
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="minAmount">Min Amount (GX) * (Minimum: 2 GX)</Label>
+                <Input
+                  id="minAmount"
+                  type="number"
+                  step="0.01"
+                  min="2"
+                  placeholder="Minimum (min 2)"
+                  value={formData.minAmount}
+                  onChange={(e) => setFormData({ ...formData, minAmount: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxAmount">Max Amount (GX) *</Label>
+                <Input
+                  id="maxAmount"
+                  type="number"
+                  step="0.01"
+                  placeholder="Maximum"
+                  value={formData.maxAmount}
+                  onChange={(e) => setFormData({ ...formData, maxAmount: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Payment Methods</h3>
+
+              {adType === "buy" ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-400">Select payment methods you accept:</p>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="mpesa"
+                      checked={paymentMethods.mpesa}
+                      onCheckedChange={(checked) => setPaymentMethods({ ...paymentMethods, mpesa: checked as boolean })}
+                    />
+                    <Label htmlFor="mpesa" className="cursor-pointer">
+                      M-Pesa
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="bankTransfer"
+                      checked={paymentMethods.bankTransfer}
+                      onCheckedChange={(checked) =>
+                        setPaymentMethods({ ...paymentMethods, bankTransfer: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="bankTransfer" className="cursor-pointer">
+                      Bank Transfer
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="paybill"
+                      checked={paymentMethods.paybill}
+                      onCheckedChange={(checked) =>
+                        setPaymentMethods({ ...paymentMethods, paybill: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="paybill" className="cursor-pointer">
+                      M-Pesa Paybill
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="airtelMoney"
+                      checked={paymentMethods.airtelMoney}
+                      onCheckedChange={(checked) =>
+                        setPaymentMethods({ ...paymentMethods, airtelMoney: checked as boolean })
+                      }
+                    />
+                    <Label htmlFor="airtelMoney" className="cursor-pointer">
+                      Airtel Money
+                    </Label>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Account Number / Payment Details</Label>
+                  <Input
+                    id="accountNumber"
+                    type="text"
+                    placeholder="Enter your payment details"
+                    value={formData.accountNumber}
+                    onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                   />
                 </div>
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full h-12 text-base font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:shadow-lg hover:shadow-green-500/50 transition mt-8"
-                  disabled={loading}
-                >
-                  {loading ? "Posting Ad..." : "✓ Post Ad Now"}
-                </Button>
-              </form>
+              )}
             </div>
 
-            {/* Sidebar Info Cards */}
-            <div className="space-y-6">
-              {/* Tips Card */}
-              <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 p-6 rounded-2xl border border-blue-500/30 backdrop-blur-xl">
-                <h3 className="font-bold text-white mb-4 flex items-center gap-2">💡 Pro Tips</h3>
-                <ul className="space-y-3 text-sm text-gray-300">
-                  <li className="flex gap-2">
-                    <span>✓</span>
-                    <span>Set competitive prices to attract traders</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>✓</span>
-                    <span>Offer multiple payment methods</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>✓</span>
-                    <span>Respond quickly to build reputation</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span>✓</span>
-                    <span>Clear terms prevent disputes</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Security Card */}
-              <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 p-6 rounded-2xl border border-green-500/30 backdrop-blur-xl">
-                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                  <Lock size={18} className="text-green-400" />
-                  Security
-                </h3>
-                <ul className="space-y-2 text-sm text-gray-300">
-                  <li>• Funds locked in escrow</li>
-                  <li>• Dispute resolution available</li>
-                  <li>• Rated seller/buyer badge</li>
-                </ul>
-              </div>
-
-              {/* Stats Card */}
-              <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 p-6 rounded-2xl border border-purple-500/30 backdrop-blur-xl">
-                <h3 className="font-bold text-white mb-4">Requirements</h3>
-                <div className="space-y-2 text-sm text-gray-300">
-                  <p>
-                    Minimum post: <span className="text-green-400 font-semibold">50 AFX</span>
-                  </p>
-                  <p>
-                    Minimum trade: <span className="text-green-400 font-semibold">2 AFX</span>
-                  </p>
-                  <p>
-                    Price variance: <span className="text-green-400 font-semibold">±4%</span>
-                  </p>
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="termsOfTrade">Terms of Trade</Label>
+              <Textarea
+                id="termsOfTrade"
+                placeholder="Enter your terms and conditions for this trade..."
+                rows={4}
+                value={formData.termsOfTrade}
+                onChange={(e) => setFormData({ ...formData, termsOfTrade: e.target.value })}
+              />
             </div>
+
+            <Button
+              type="submit"
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-green-500 to-green-600 text-black hover:shadow-lg hover:shadow-green-500/50 transition"
+              disabled={loading}
+            >
+              {loading ? "Posting Ad..." : "Post Ad"}
+            </Button>
+          </form>
+
+          <div className="mt-8 glass-card p-8 rounded-xl border border-blue-500/30 bg-blue-500/10">
+            <h3 className="font-bold text-white mb-4">Tips for Creating Successful Ads</h3>
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li>Minimum posting amount: 50 GX</li>
+              <li>Minimum trade amount: 2 GX</li>
+              <li>Price must be within ±4% of current GX price</li>
+              <li>Set competitive prices to attract more traders</li>
+              <li>Provide multiple payment methods for flexibility</li>
+              <li>Write clear terms to avoid misunderstandings</li>
+              <li>Respond quickly to trade requests for better ratings</li>
+            </ul>
           </div>
         </div>
       </main>

@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
-import PaymentMethodForm, { type PaymentDetails } from "@/components/payment-method-form"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
@@ -32,7 +31,7 @@ interface Ad {
   price_per_gx?: number
 }
 
-export default function SellAFXPage() {
+export default function SellGXPage() {
   const [ads, setAds] = useState<Ad[]>([])
   const [loading, setLoading] = useState(true)
   const [initiatingTrade, setInitiatingTrade] = useState<string | null>(null)
@@ -40,10 +39,6 @@ export default function SellAFXPage() {
   const [tradeAmounts, setTradeAmounts] = useState<{ [key: string]: string }>({})
   const router = useRouter()
   const supabase = createClient()
-
-  const [showPaymentForm, setShowPaymentForm] = useState(false)
-  const [selectedAd, setSelectedAd] = useState<Ad | null>(null)
-  const [savingPayment, setSavingPayment] = useState(false)
 
   useEffect(() => {
     fetchBuyAds()
@@ -87,8 +82,10 @@ export default function SellAFXPage() {
     }
   }
 
-  async function handleSellNow(ad: Ad) {
+  async function initiateTrade(ad: Ad) {
     try {
+      setInitiatingTrade(ad.id)
+
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -99,88 +96,45 @@ export default function SellAFXPage() {
 
       if (user.id === ad.user_id) {
         alert("You cannot trade with yourself")
+        setInitiatingTrade(null)
         return
       }
 
-      setSelectedAd(ad)
-      setShowPaymentForm(true)
-    } catch (error) {
-      console.error("[v0] Error:", error)
-    }
-  }
-
-  async function handlePaymentSubmit(paymentDetails: PaymentDetails) {
-    if (!selectedAd || !currentUserId) return
-
-    try {
-      setSavingPayment(true)
-
-      // Save payment details
-      const { data: paymentData, error: paymentError } = await supabase
-        .from("p2p_payment_details")
-        .insert({
-          user_id: currentUserId,
-          method_type: paymentDetails.method_type,
-          full_name: paymentDetails.full_name || null,
-          phone_number: paymentDetails.phone_number || null,
-          paybill_number: paymentDetails.paybill_number || null,
-          account_number: paymentDetails.account_number || null,
-          bank_name: paymentDetails.bank_name || null,
-          airtel_money_number: paymentDetails.airtel_money_number || null,
-        })
-        .select()
-        .single()
-
-      if (paymentError) {
-        console.error("[v0] Error saving payment details:", paymentError)
-        alert("Failed to save payment details")
-        return
-      }
-
-      // Now initiate the trade with the payment details
-      const customAmount = Number.parseFloat(tradeAmounts[selectedAd.id] || "0")
-      const tradeAmount = customAmount > 0 ? customAmount : selectedAd.min_amount
-      const availableAmount = selectedAd.remaining_amount || selectedAd.gx_amount
+      const customAmount = Number.parseFloat(tradeAmounts[ad.id] || "0")
+      const tradeAmount = customAmount > 0 ? customAmount : ad.min_amount
+      const availableAmount = ad.remaining_amount || ad.gx_amount
 
       if (tradeAmount < 2) {
-        alert("Minimum trade amount is 2 AFX")
+        alert("Minimum trade amount is 2 GX")
+        setInitiatingTrade(null)
         return
       }
 
       if (tradeAmount > availableAmount) {
-        alert(`Maximum available amount is ${availableAmount} AFX`)
+        alert(`Maximum available amount is ${availableAmount} GX`)
+        setInitiatingTrade(null)
         return
       }
 
-      const { data: tradeId, error: tradeError } = await supabase.rpc("initiate_p2p_trade_v2", {
-        p_ad_id: selectedAd.id,
-        p_buyer_id: currentUserId,
+      const { data: tradeId, error } = await supabase.rpc("initiate_p2p_trade_v2", {
+        p_ad_id: ad.id,
+        p_buyer_id: user.id,
         p_gx_amount: tradeAmount,
       })
 
-      if (tradeError) {
-        console.error("[v0] Error initiating trade:", tradeError)
-        alert(tradeError.message || "Failed to initiate trade")
+      if (error) {
+        console.error("[v0] Error initiating trade:", error)
+        alert(error.message || "Failed to initiate trade")
         return
       }
 
-      // Update the trade with seller payment details
-      const { error: updateError } = await supabase
-        .from("p2p_trades")
-        .update({ seller_payment_id: paymentData.id })
-        .eq("id", tradeId)
-
-      if (updateError) {
-        console.error("[v0] Warning: Could not link payment details to trade:", updateError)
-      }
-
-      console.log("[v0] Trade initiated with payment details, redirecting")
+      console.log("[v0] Trade initiated successfully, redirecting to trade page")
       router.push(`/p2p/trade/${tradeId}`)
     } catch (error) {
       console.error("[v0] Error:", error)
-      alert("Failed to complete sale setup")
+      alert("Failed to initiate trade")
     } finally {
-      setSavingPayment(false)
+      setInitiatingTrade(null)
     }
   }
 
@@ -203,8 +157,8 @@ export default function SellAFXPage() {
               <ArrowLeft size={20} className="mr-2" />
               Back to P2P
             </Button>
-            <h1 className="text-4xl font-bold mb-2">Sell AFX</h1>
-            <p className="text-gray-400">Browse available buy offers and sell AFX to other users</p>
+            <h1 className="text-4xl font-bold mb-2">Sell GX</h1>
+            <p className="text-gray-400">Browse available buy offers and sell GX to other users</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -219,7 +173,7 @@ export default function SellAFXPage() {
                 <div className="text-5xl font-bold text-purple-400 mb-2">
                   {ads.reduce((sum, ad) => sum + (ad.remaining_amount || ad.gx_amount), 0).toFixed(2)}
                 </div>
-                <p className="text-gray-400">Total AFX Wanted</p>
+                <p className="text-gray-400">Total GX Wanted</p>
               </div>
             </div>
             <div className="glass-card p-8 rounded-xl border border-white/10">
@@ -279,35 +233,18 @@ export default function SellAFXPage() {
                         <div className="grid grid-cols-2 gap-4 mb-3">
                           <div>
                             <p className="text-sm text-gray-400">Amount</p>
-                            <p className="font-bold text-lg text-red-400">{ad.remaining_amount || ad.gx_amount} AFX</p>
+                            <p className="font-bold text-lg text-red-400">{ad.remaining_amount || ad.gx_amount} GX</p>
                             <p className="text-xs text-gray-500">Available</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-400">Price per AFX</p>
+                            <p className="text-sm text-gray-400">Price per GX</p>
                             <p className="font-semibold text-white">{ad.price_per_gx || "N/A"} KES</p>
                           </div>
                         </div>
 
                         <div className="mb-3">
                           <p className="text-sm text-gray-400">Payment Methods</p>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {ad.mpesa_number && (
-                              <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">M-Pesa</span>
-                            )}
-                            {ad.paybill_number && (
-                              <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">
-                                M-Pesa Paybill
-                              </span>
-                            )}
-                            {ad.airtel_money && (
-                              <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded">Airtel Money</span>
-                            )}
-                            {ad.account_number && (
-                              <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
-                                Bank Transfer
-                              </span>
-                            )}
-                          </div>
+                          <p className="text-sm text-white">{getPaymentMethods(ad)}</p>
                         </div>
 
                         {ad.terms_of_trade && (
@@ -327,7 +264,7 @@ export default function SellAFXPage() {
                         {currentUserId !== ad.user_id && (
                           <div className="space-y-2">
                             <Label htmlFor={`amount-${ad.id}`} className="text-sm text-gray-400">
-                              Amount to sell (AFX)
+                              Amount to sell (GX)
                             </Label>
                             <Input
                               id={`amount-${ad.id}`}
@@ -344,7 +281,7 @@ export default function SellAFXPage() {
                         )}
                         <Button
                           className="px-6 py-3 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold hover:shadow-lg hover:shadow-red-500/50 transition"
-                          onClick={() => handleSellNow(ad)}
+                          onClick={() => initiateTrade(ad)}
                           disabled={initiatingTrade === ad.id || currentUserId === ad.user_id}
                         >
                           {currentUserId === ad.user_id
@@ -363,13 +300,6 @@ export default function SellAFXPage() {
         </div>
       </main>
       <Footer />
-
-      <PaymentMethodForm
-        open={showPaymentForm}
-        onOpenChange={setShowPaymentForm}
-        onSubmit={handlePaymentSubmit}
-        loading={savingPayment}
-      />
     </div>
   )
 }

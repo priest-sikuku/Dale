@@ -2,8 +2,7 @@ import { createClient } from "@/lib/supabase/client"
 
 /**
  * Fetches the available balance for the current user
- * Available balance = total balance from coins table - coins locked in active sell ads
- * Updated to use coins table as primary source and fallback to RPC function
+ * Available balance = total_mined - coins locked in active sell ads
  */
 export async function fetchAvailableBalance(
   setAvailableBalance: (balance: number | null) => void,
@@ -20,83 +19,19 @@ export async function fetchAvailableBalance(
     return
   }
 
-  try {
-    // Use unified balance function that works for both dashboard and P2P
-    const { data, error } = await supabase.rpc("get_unified_available_balance", { p_user_id: user.id })
+  const { data, error } = await supabase.rpc("get_available_balance", { user_id: user.id })
 
-    if (error) {
-      console.error("[v0] Error fetching unified available balance:", error)
-      // Fallback to direct coins query
-      const { data: coinsData } = await supabase
-        .from("coins")
-        .select("amount")
-        .eq("user_id", user.id)
-        .eq("status", "active")
+  if (error) {
+    console.error("[v0] Error fetching available balance:", error)
+    // Fallback to total_mined if function fails
+    const { data: profileData } = await supabase.from("profiles").select("total_mined").eq("id", user.id).single()
 
-      if (coinsData) {
-        const totalBalance = coinsData.reduce((sum, coin) => sum + (coin.amount || 0), 0)
-        setAvailableBalance(totalBalance || 0)
-      } else {
-        setAvailableBalance(0)
-      }
-    } else if (data !== null) {
-      setAvailableBalance(data)
-    } else {
-      setAvailableBalance(0)
+    if (profileData) {
+      setAvailableBalance(profileData.total_mined || 0)
     }
-  } catch (err) {
-    console.error("[v0] Exception in fetchAvailableBalance:", err)
-    setAvailableBalance(0)
+  } else if (data !== null) {
+    setAvailableBalance(data)
   }
 
   setIsLoading(false)
-}
-
-/**
- * New function to fetch user's referral code and stats
- */
-export async function fetchUserReferralInfo(userId: string) {
-  const supabase = createClient()
-
-  try {
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("referral_code, total_referrals, total_commission, referred_by")
-      .eq("id", userId)
-      .single()
-
-    if (error) {
-      console.error("[v0] Error fetching referral info:", error)
-      return null
-    }
-
-    return profile
-  } catch (err) {
-    console.error("[v0] Exception in fetchUserReferralInfo:", err)
-    return null
-  }
-}
-
-/**
- * New function to validate referral code and get referrer info
- */
-export async function validateReferralCode(referralCode: string) {
-  const supabase = createClient()
-
-  try {
-    const { data: referrer, error } = await supabase
-      .from("profiles")
-      .select("id, username, referral_code")
-      .eq("referral_code", referralCode)
-      .single()
-
-    if (error || !referrer) {
-      return { valid: false, referrerId: null }
-    }
-
-    return { valid: true, referrerId: referrer.id }
-  } catch (err) {
-    console.error("[v0] Exception in validateReferralCode:", err)
-    return { valid: false, referrerId: null }
-  }
 }

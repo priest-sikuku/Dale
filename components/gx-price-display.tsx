@@ -10,7 +10,7 @@ interface PriceData {
   volatility?: number
 }
 
-export function GXPriceDisplay() {
+export function AFXPriceDisplay() {
   const [priceData, setPriceData] = useState<PriceData>({
     price: 16.0,
     previousPrice: 16.0,
@@ -27,7 +27,7 @@ export function GXPriceDisplay() {
       setPriceData(data)
       setIsLoading(false)
     } catch (error) {
-      console.error("[v0] Error fetching GX price:", error)
+      console.error("[v0] Error fetching AFX price:", error)
     }
   }
 
@@ -51,7 +51,7 @@ export function GXPriceDisplay() {
     <div className={`glass-card p-6 rounded-2xl border ${borderColor} transition-all duration-300`}>
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-gray-400 text-sm mb-1">Current GX Price</p>
+          <p className="text-gray-400 text-sm mb-1">Current AFX Price</p>
           <div className="flex items-baseline gap-2">
             <p className={`text-3xl font-bold ${priceColor} transition-colors duration-300`}>
               {isLoading ? "..." : `KES ${priceData.price.toFixed(2)}`}
@@ -85,3 +85,6 @@ export function GXPriceDisplay() {
     </div>
   )
 }
+
+// Export with old name for backward compatibility
+export { AFXPriceDisplay as GXPriceDisplay }

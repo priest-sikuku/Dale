@@ -3,21 +3,30 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
-import { useBalance } from "@/lib/hooks/use-balance"
 
 export function BalancePanel() {
-  const { balance, loading } = useBalance()
+  const [balance, setBalance] = useState(0)
   const [userRating, setUserRating] = useState(0)
   const [userTrades, setUserTrades] = useState(0)
-  const supabase = createClient()
 
   useEffect(() => {
     const loadUserData = async () => {
+      const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()
 
       if (user) {
+        const { data: coins } = await supabase
+          .from("coins")
+          .select("amount")
+          .eq("user_id", user.id)
+          .eq("status", "available")
+        if (coins) {
+          const total = coins.reduce((sum, coin) => sum + Number(coin.amount), 0)
+          setBalance(total)
+        }
+
         // Load user profile stats
         const { data: profile } = await supabase
           .from("profiles")
@@ -32,17 +41,16 @@ export function BalancePanel() {
     }
 
     loadUserData()
-  }, [supabase])
+  }, [])
 
   return (
     <div className="space-y-4">
+      {/* Balance Card */}
       <div className="glass-card p-6 rounded-2xl border border-white/5">
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div>
             <div className="text-xs text-gray-400 mb-1">Your Balance</div>
-            <div className="text-2xl font-bold text-white">
-              {loading ? "..." : balance !== null ? balance.toFixed(2) : "0.00"} AFX
-            </div>
+            <div className="text-2xl font-bold text-white">{balance ? balance.toFixed(2) : "0.00"} AFX</div>
           </div>
           <div className="text-right">
             <div className="text-xs text-gray-400 mb-1">Daily Growth</div>
@@ -75,13 +83,13 @@ export function BalancePanel() {
         <div className="flex gap-3">
           <Link
             href="/market?tab=buy"
-            className="flex-1 px-4 py-2 rounded-lg btn-ghost-gx font-semibold border hover:bg-green-500/10 transition text-sm text-center"
+            className="flex-1 px-4 py-2 rounded-lg btn-ghost-afx font-semibold border hover:bg-green-500/10 transition text-sm text-center"
           >
             Buy AFX
           </Link>
           <Link
             href="/market?tab=sell"
-            className="flex-1 px-4 py-2 rounded-lg btn-ghost-gx font-semibold border hover:bg-green-500/10 transition text-sm text-center"
+            className="flex-1 px-4 py-2 rounded-lg btn-ghost-afx font-semibold border hover:bg-green-500/10 transition text-sm text-center"
           >
             Sell AFX
           </Link>

@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 
 interface Transaction {
   id: number
-  type: "trade" | "buy" | "sell" | "claim"
+  type: "trade" | "buy" | "sell" | "claim" | "referral_commission"
   amount: number
   time: string
   status: "completed" | "pending"
@@ -19,7 +19,9 @@ interface Transaction {
 export default function TransactionsPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(true)
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [filterType, setFilterType] = useState<"all" | "trade" | "buy" | "sell" | "claim">("all")
+  const [filterType, setFilterType] = useState<"all" | "trade" | "buy" | "sell" | "claim" | "referral_commission">(
+    "all",
+  )
 
   useEffect(() => {
     const loadTransactions = async () => {
@@ -40,7 +42,7 @@ export default function TransactionsPage() {
         if (transactionsData && transactionsData.length > 0) {
           const formattedTransactions = transactionsData.map((tx, index) => ({
             id: index + 1,
-            type: tx.type as "trade" | "buy" | "sell" | "claim",
+            type: tx.type as "trade" | "buy" | "sell" | "claim" | "referral_commission",
             amount: Number(tx.amount),
             time: new Date(tx.created_at).toLocaleString(),
             status: tx.status as "completed" | "pending",
@@ -76,6 +78,8 @@ export default function TransactionsPage() {
         return "Bought AFX"
       case "sell":
         return "Sold AFX"
+      case "referral_commission":
+        return "Referral Commission"
       default:
         return "Transaction"
     }
@@ -89,12 +93,15 @@ export default function TransactionsPage() {
         return "bg-blue-500/10"
       case "sell":
         return "bg-purple-500/10"
+      case "referral_commission":
+        return "bg-green-500/10"
       default:
         return "bg-gray-500/10"
     }
   }
 
   const totalIncome = transactions.filter((tx) => tx.amount > 0).reduce((sum, tx) => sum + tx.amount, 0)
+
   const totalExpense = transactions.filter((tx) => tx.amount < 0).reduce((sum, tx) => sum + Math.abs(tx.amount), 0)
 
   return (
@@ -166,6 +173,16 @@ export default function TransactionsPage() {
               }`}
             >
               Sells
+            </button>
+            <button
+              onClick={() => setFilterType("referral_commission")}
+              className={`px-4 py-2 rounded-lg font-semibold text-sm transition ${
+                filterType === "referral_commission"
+                  ? "bg-gradient-to-r from-green-500 to-green-600 text-black shadow-lg shadow-green-500/50"
+                  : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
+              }`}
+            >
+              Referral Commissions
             </button>
           </div>
 

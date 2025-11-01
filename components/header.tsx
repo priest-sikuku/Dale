@@ -54,12 +54,13 @@ export default function Header() {
     <header className="border-b border-white/5">
       <div className="max-w-6xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
+          {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12" aria-hidden="true">
               <defs>
                 <linearGradient id="g1" x1="0" x2="1">
-                  <stop offset="0%" stopColor="#00ff88" />
-                  <stop offset="100%" stopColor="#00c853" />
+                  <stop offset="0%" stopColor="#FFD700" />
+                  <stop offset="100%" stopColor="#00C853" />
                 </linearGradient>
                 <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
                   <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="#051428" floodOpacity="0.6" />
@@ -72,8 +73,8 @@ export default function Header() {
               </g>
             </svg>
             <div>
-              <div className="font-bold text-lg bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
-                Afrix <span className="text-emerald-400">AFX</span>
+              <div className="font-bold text-lg">
+                AfriX <span className="text-yellow-400">AFX</span>
               </div>
               <div className="text-xs text-gray-400">The Coin That Never Sleeps</div>
             </div>

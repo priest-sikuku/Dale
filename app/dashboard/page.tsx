@@ -5,7 +5,9 @@ import Link from "next/link"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { DashboardStats } from "@/components/dashboard-stats"
+import { TransactionHistory } from "@/components/transaction-history"
 import { UserStatsCard } from "@/components/user-stats-card"
+import { PriceHistoryChart } from "@/components/price-history-chart"
 import { MiningWidget } from "@/components/mining-widget"
 import { ArrowLeftRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -81,10 +83,13 @@ export default function Dashboard() {
             <div className="lg:col-span-2 space-y-8">
               <MiningWidget />
               <UserStatsCard />
+              <PriceHistoryChart />
             </div>
 
             {/* Right Column - History */}
-            <div></div>
+            <div>
+              <TransactionHistory />
+            </div>
           </div>
         </div>
       </main>

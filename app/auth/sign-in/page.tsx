@@ -10,8 +10,6 @@ import Footer from "@/components/footer"
 import { Eye, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
-export const dynamic = "force-dynamic"
-
 export default function SignIn() {
   const router = useRouter()
   const supabase = createClient()
@@ -65,7 +63,7 @@ export default function SignIn() {
       <main className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="glass-card p-8 rounded-2xl border border-white/5 w-full max-w-md">
           <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-gray-400 mb-8">Sign in to your AfriX account</p>
+          <p className="text-gray-400 mb-8">Sign in to your GrowX account</p>
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6 text-red-400 text-sm">

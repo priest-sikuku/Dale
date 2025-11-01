@@ -103,7 +103,7 @@ export default function RatingsPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">Your Ratings & Reviews</h1>
-            <p className="text-gray-400">Build trust in the AfriX community with your trading history</p>
+            <p className="text-gray-400">Build trust in the GrowX community with your trading history</p>
           </div>
 
           {/* Rating Summary */}
@@ -167,7 +167,7 @@ export default function RatingsPage() {
                       <div>
                         <h3 className="font-semibold text-white">{trade.sellerName}</h3>
                         <p className="text-sm text-gray-400">
-                          {trade.type === "buy" ? "Bought" : "Sold"} {trade.amount} AFX at KES{" "}
+                          {trade.type === "buy" ? "Bought" : "Sold"} {trade.amount} GX at KES{" "}
                           {trade.pricePerCoin.toFixed(2)}
                         </p>
                       </div>

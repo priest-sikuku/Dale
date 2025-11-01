@@ -103,7 +103,7 @@ export default function MyAdsPage() {
             ) : ads.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-400 mb-4">You haven't posted any ads yet</p>
-                <Button onClick={() => router.push("/p2p/post-ad")} className="btn-primary-afx">
+                <Button onClick={() => router.push("/p2p/post-ad")} className="btn-primary-gx">
                   Post Your First Ad
                 </Button>
               </div>
@@ -137,12 +137,12 @@ export default function MyAdsPage() {
                           <div>
                             <p className="text-sm text-gray-400">Amount</p>
                             <p className="font-semibold">
-                              {ad.remaining_amount} / {ad.gx_amount} AFX
+                              {ad.remaining_amount} / {ad.gx_amount} GX
                             </p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-400">Price</p>
-                            <p className="font-semibold">{ad.price_per_gx} KES/AFX</p>
+                            <p className="font-semibold">{ad.price_per_gx} KES/GX</p>
                           </div>
                         </div>
 

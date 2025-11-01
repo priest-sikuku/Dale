@@ -9,8 +9,7 @@ import Footer from "@/components/footer"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { useBalance } from "@/lib/hooks/use-balance"
-import { fetchAvailableBalance } from "@/lib/supabase/utils" // Fixed import path - fetchAvailableBalance is in lib/supabase/utils.ts
+import { fetchAvailableBalance } from "@/lib/supabase/utils" // Declare fetchAvailableBalance
 
 interface Ad {
   id: string
@@ -49,20 +48,18 @@ export default function P2PMarket() {
   const [activeTab, setActiveTab] = useState<"buy" | "sell">("buy")
   const [ads, setAds] = useState<Ad[]>([])
   const [loading, setLoading] = useState(true)
+  const [availableBalance, setAvailableBalance] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [initiatingTrade, setInitiatingTrade] = useState<string | null>(null)
   const [tradeAmounts, setTradeAmounts] = useState<{ [key: string]: string }>({})
 
-  const [availableBalance, setAvailableBalance] = useState<number | null>(null)
-  const [isLoadingBalance, setIsLoadingBalance] = useState(true)
-
   const [userStats, setUserStats] = useState<{ [key: string]: UserStats }>({})
 
-  const { balance: availableBalanceHook, loading: isLoadingHook } = useBalance()
-
   useEffect(() => {
+    fetchAvailableBalance(setAvailableBalance, setIsLoading)
     getCurrentUser()
-    const interval = setInterval(() => fetchAvailableBalance(setAvailableBalance, setIsLoadingBalance), 5000)
+    const interval = setInterval(() => fetchAvailableBalance(setAvailableBalance, setIsLoading), 5000)
     return () => clearInterval(interval)
   }, [])
 
@@ -161,13 +158,13 @@ export default function P2PMarket() {
       const availableAmount = ad.remaining_amount || ad.gx_amount
 
       if (tradeAmount < 2) {
-        alert("Minimum trade amount is 2 AFX")
+        alert("Minimum trade amount is 2 GX")
         setInitiatingTrade(null)
         return
       }
 
       if (tradeAmount > availableAmount) {
-        alert(`Maximum available amount is ${availableAmount} AFX`)
+        alert(`Maximum available amount is ${availableAmount} GX`)
         setInitiatingTrade(null)
         return
       }
@@ -227,7 +224,7 @@ export default function P2PMarket() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <div className="mb-6">
             <h1 className="text-3xl font-bold mb-2">P2P Trading</h1>
-            <p className="text-gray-400 text-sm">Buy and sell AFX directly with verified traders</p>
+            <p className="text-gray-400 text-sm">Buy and sell GX directly with verified traders</p>
           </div>
 
           <div className="bg-[#1a1d24] rounded-xl p-4 mb-6 border border-white/5">
@@ -261,11 +258,7 @@ export default function P2PMarket() {
                 <Wallet size={18} className="text-[#0ecb81]" />
                 <span className="text-sm text-gray-400">Available:</span>
                 <span className="font-semibold text-white">
-                  {isLoadingHook
-                    ? "..."
-                    : availableBalanceHook !== null
-                      ? `${availableBalanceHook.toFixed(2)} AFX`
-                      : "0.00 AFX"}
+                  {isLoading ? "..." : availableBalance !== null ? `${availableBalance.toFixed(2)} GX` : "0.00 GX"}
                 </span>
               </div>
 
@@ -377,17 +370,17 @@ export default function P2PMarket() {
                       <div className="flex-1 border-l border-white/5 pl-6">
                         <div className="mb-4">
                           <div className="text-2xl font-bold text-white mb-1">
-                            KSh {ad.price_per_gx || "16.29"} <span className="text-base text-gray-400">/ AFX</span>
+                            KSh {ad.price_per_gx || "16.29"} <span className="text-base text-gray-400">/ GX</span>
                           </div>
                           <div className="flex items-center gap-4 text-xs text-gray-400">
                             <div>
                               <span className="text-gray-500">Available </span>
-                              <span className="text-white font-medium">{ad.remaining_amount || ad.gx_amount} AFX</span>
+                              <span className="text-white font-medium">{ad.remaining_amount || ad.gx_amount} GX</span>
                             </div>
                             <div>
                               <span className="text-gray-500">Limit </span>
                               <span className="text-white font-medium">
-                                {ad.min_amount}-{ad.max_amount} AFX
+                                {ad.min_amount}-{ad.max_amount} GX
                               </span>
                             </div>
                           </div>
@@ -405,7 +398,7 @@ export default function P2PMarket() {
                             {ad.paybill_number && (
                               <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
                                 <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                                <span className="text-xs text-gray-300">M-Pesa Paybill</span>
+                                <span className="text-xs text-gray-300">Paybill</span>
                               </div>
                             )}
                             {ad.airtel_money && (
@@ -417,7 +410,7 @@ export default function P2PMarket() {
                             {ad.account_number && (
                               <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
                                 <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                <span className="text-xs text-gray-300">Bank Transfer</span>
+                                <span className="text-xs text-gray-300">Bank</span>
                               </div>
                             )}
                           </div>
@@ -432,7 +425,7 @@ export default function P2PMarket() {
                           <>
                             <div>
                               <Label htmlFor={`amount-${ad.id}`} className="text-xs text-gray-400 mb-2 block">
-                                Enter amount (AFX)
+                                Enter amount (GX)
                               </Label>
                               <Input
                                 id={`amount-${ad.id}`}
@@ -455,11 +448,7 @@ export default function P2PMarket() {
                               onClick={() => initiateTrade(ad)}
                               disabled={initiatingTrade === ad.id}
                             >
-                              {initiatingTrade === ad.id
-                                ? "Processing..."
-                                : activeTab === "buy"
-                                  ? "Buy AFX"
-                                  : "Sell AFX"}
+                              {initiatingTrade === ad.id ? "Processing..." : activeTab === "buy" ? "Buy GX" : "Sell GX"}
                             </Button>
                           </>
                         )}

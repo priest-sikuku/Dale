@@ -10,8 +10,6 @@ import Footer from "@/components/footer"
 import { Eye, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
-export const dynamic = "force-dynamic"
-
 export default function SignUp() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -45,15 +43,6 @@ export default function SignUp() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }))
-  }
-
-  const generateReferralCodes = () => {
-    const codes = []
-    for (let i = 0; i < 5; i++) {
-      const code = `AFX_${Math.random().toString(36).substring(2, 10).toUpperCase()}`
-      codes.push(code)
-    }
-    return codes
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,19 +104,11 @@ export default function SignUp() {
         referrerId = referrerData.id
       }
 
-      // Generate unique primary referral code
-      const generateUniqueCode = async () => {
-        let isUnique = false
-        let code = ""
-        while (!isUnique) {
-          code = `AFX_${Math.random().toString(36).substring(2, 10).toUpperCase()}`
-          const { data } = await supabase.from("profiles").select("id").eq("referral_code", code).single()
-          isUnique = !data
-        }
-        return code
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+      let referralCode = ""
+      for (let i = 0; i < 6; i++) {
+        referralCode += chars.charAt(Math.floor(Math.random() * chars.length))
       }
-
-      const primaryReferralCode = await generateUniqueCode()
 
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
@@ -136,7 +117,7 @@ export default function SignUp() {
           emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
           data: {
             username: formData.username,
-            referral_code: primaryReferralCode,
+            referral_code: referralCode,
           },
         },
       })
@@ -148,7 +129,7 @@ export default function SignUp() {
           .from("profiles")
           .update({
             username: formData.username,
-            referral_code: primaryReferralCode,
+            referral_code: referralCode,
             referred_by: referrerId,
           })
           .eq("id", data.user.id)
@@ -167,6 +148,8 @@ export default function SignUp() {
 
           if (referralError) {
             console.error("[v0] Referral creation error:", referralError)
+          } else {
+            console.log("[v0] Referral relationship created successfully")
           }
         }
 
@@ -185,7 +168,7 @@ export default function SignUp() {
       <main className="flex-1 flex items-center justify-center py-12 px-4">
         <div className="glass-card p-8 rounded-2xl border border-white/5 w-full max-w-md">
           <h1 className="text-3xl font-bold mb-2">Create Account</h1>
-          <p className="text-gray-400 mb-8">Join Afrix AFX and start trading today</p>
+          <p className="text-gray-400 mb-8">Join AfriX and start trading today</p>
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6 text-red-400 text-sm">
@@ -277,7 +260,7 @@ export default function SignUp() {
                 className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500/50 transition"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Get 2% trading commission + 1.5% transaction commission from your referrals
+                Earn 2% trading commission + 1% mining commission from your referrals
               </p>
             </div>
 

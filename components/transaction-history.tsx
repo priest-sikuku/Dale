@@ -65,9 +65,9 @@ export function TransactionHistory() {
       case "claim":
         return "Coins Claimed"
       case "buy":
-        return "Bought AFX"
+        return "Bought GX"
       case "sell":
-        return "Sold AFX"
+        return "Sold GX"
       default:
         return "Transaction"
     }

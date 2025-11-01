@@ -147,6 +147,19 @@
   background-clip: text;
 }
 
+/* Rebranded button classes from gx to afx */
+.btn-primary-afx {
+  background: linear-gradient(90deg, #00c853, #00b14a);
+  color: #03121b;
+}
+
+.btn-ghost-afx {
+  background: transparent;
+  color: #00c853;
+  border: 1px solid rgba(0, 200, 83, 0.18);
+}
+
+/* Keep old classes for backward compatibility */
 .btn-primary-gx {
   background: linear-gradient(90deg, #00c853, #00b14a);
   color: #03121b;

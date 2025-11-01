@@ -105,13 +105,13 @@ export default function BuyGXPage() {
       const availableAmount = ad.remaining_amount || ad.gx_amount
 
       if (tradeAmount < 2) {
-        alert("Minimum trade amount is 2 AFX")
+        alert("Minimum trade amount is 2 GX")
         setInitiatingTrade(null)
         return
       }
 
       if (tradeAmount > availableAmount) {
-        alert(`Maximum available amount is ${availableAmount} AFX`)
+        alert(`Maximum available amount is ${availableAmount} GX`)
         setInitiatingTrade(null)
         return
       }
@@ -157,8 +157,8 @@ export default function BuyGXPage() {
               <ArrowLeft size={20} className="mr-2" />
               Back to P2P
             </Button>
-            <h1 className="text-4xl font-bold mb-2">Buy AFX</h1>
-            <p className="text-gray-400">Browse available sell offers and buy AFX from other users</p>
+            <h1 className="text-4xl font-bold mb-2">Buy GX</h1>
+            <p className="text-gray-400">Browse available sell offers and buy GX from other users</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -173,7 +173,7 @@ export default function BuyGXPage() {
                 <div className="text-5xl font-bold text-blue-400 mb-2">
                   {ads.reduce((sum, ad) => sum + (ad.remaining_amount || ad.gx_amount), 0).toFixed(2)}
                 </div>
-                <p className="text-gray-400">Total AFX Available</p>
+                <p className="text-gray-400">Total GX Available</p>
               </div>
             </div>
             <div className="glass-card p-8 rounded-xl border border-white/10">
@@ -233,37 +233,18 @@ export default function BuyGXPage() {
                         <div className="grid grid-cols-2 gap-4 mb-3">
                           <div>
                             <p className="text-sm text-gray-400">Amount</p>
-                            <p className="font-bold text-lg text-green-400">
-                              {ad.remaining_amount || ad.gx_amount} AFX
-                            </p>
+                            <p className="font-bold text-lg text-green-400">{ad.remaining_amount || ad.gx_amount} GX</p>
                             <p className="text-xs text-gray-500">Available</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-400">Price per AFX</p>
+                            <p className="text-sm text-gray-400">Price per GX</p>
                             <p className="font-semibold text-white">{ad.price_per_gx || "N/A"} KES</p>
                           </div>
                         </div>
 
                         <div className="mb-3">
                           <p className="text-sm text-gray-400">Payment Methods</p>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {ad.mpesa_number && (
-                              <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">M-Pesa</span>
-                            )}
-                            {ad.paybill_number && (
-                              <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">
-                                M-Pesa Paybill
-                              </span>
-                            )}
-                            {ad.airtel_money && (
-                              <span className="text-xs bg-red-500/20 text-red-400 px-2 py-1 rounded">Airtel Money</span>
-                            )}
-                            {ad.account_number && (
-                              <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
-                                Bank Transfer
-                              </span>
-                            )}
-                          </div>
+                          <p className="text-sm text-white">{getPaymentMethods(ad)}</p>
                         </div>
 
                         {ad.terms_of_trade && (
@@ -283,7 +264,7 @@ export default function BuyGXPage() {
                         {currentUserId !== ad.user_id && (
                           <div className="space-y-2">
                             <Label htmlFor={`amount-${ad.id}`} className="text-sm text-gray-400">
-                              Amount to buy (AFX)
+                              Amount to buy (GX)
                             </Label>
                             <Input
                               id={`amount-${ad.id}`}

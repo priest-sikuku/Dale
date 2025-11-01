@@ -45,7 +45,7 @@ export default function Hero() {
         <div className="lg:col-span-2 space-y-8">
           {/* Main Card */}
           <div className="glass-card p-8 rounded-2xl border border-white/5">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Afrix AFX — The Coin That Never Sleeps</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">AfriX — The Coin That Never Sleeps</h1>
             <p className="text-gray-400 text-lg leading-relaxed mb-6">
               Earn <strong className="text-white">3% daily</strong> growth on your holdings. Trade peer‑to‑peer across
               Kenya and beyond. Built for continuous growth and community.

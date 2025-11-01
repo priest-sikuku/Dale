@@ -28,8 +28,10 @@ interface Trade {
   buyer_email?: string | null
   seller_username?: string | null
   seller_email?: string | null
-  seller_payment_method?: string | null
-  seller_payment_details?: Record<string, any> | null
+  ad_account_number?: string | null
+  ad_mpesa_number?: string | null
+  ad_paybill_number?: string | null
+  ad_airtel_money?: string | null
   ad_terms_of_trade?: string | null
 }
 
@@ -119,34 +121,10 @@ export default function TradePage() {
         .eq("id", tradeData.seller_id)
         .single()
 
-      let sellerPaymentMethod = null
-      let sellerPaymentDetails = null
-
-      if (tradeData.seller_payment_id) {
-        const { data: paymentData } = await supabase
-          .from("p2p_payment_details")
-          .select("*")
-          .eq("id", tradeData.seller_payment_id)
-          .single()
-
-        if (paymentData) {
-          sellerPaymentMethod = paymentData.method_type
-          sellerPaymentDetails = {
-            method_type: paymentData.method_type,
-            full_name: paymentData.full_name,
-            phone_number: paymentData.phone_number,
-            paybill_number: paymentData.paybill_number,
-            account_number: paymentData.account_number,
-            bank_name: paymentData.bank_name,
-            airtel_money_number: paymentData.airtel_money_number,
-          }
-        }
-      }
-
-      // Fetch ad terms
+      // Fetch ad details
       const { data: adData } = await supabase
         .from("p2p_ads")
-        .select("terms_of_trade")
+        .select("account_number, mpesa_number, paybill_number, airtel_money, terms_of_trade")
         .eq("id", tradeData.ad_id)
         .single()
 
@@ -157,8 +135,10 @@ export default function TradePage() {
         buyer_email: buyerData?.email || null,
         seller_username: sellerData?.username || null,
         seller_email: sellerData?.email || null,
-        seller_payment_method: sellerPaymentMethod,
-        seller_payment_details: sellerPaymentDetails,
+        ad_account_number: adData?.account_number || null,
+        ad_mpesa_number: adData?.mpesa_number || null,
+        ad_paybill_number: adData?.paybill_number || null,
+        ad_airtel_money: adData?.airtel_money || null,
         ad_terms_of_trade: adData?.terms_of_trade || null,
       }
 
@@ -382,31 +362,14 @@ export default function TradePage() {
     return <Badge variant={config.variant}>{config.label}</Badge>
   }
 
-  function getPaymentMethodDisplay() {
-    if (!trade?.seller_payment_details) return ["Payment details pending verification"]
-
-    const details = trade.seller_payment_details
-    const lines: string[] = []
-
-    switch (details.method_type) {
-      case "mpesa_personal":
-        lines.push(`M-Pesa Personal: ${details.phone_number}`)
-        lines.push(`Name: ${details.full_name}`)
-        break
-      case "mpesa_paybill":
-        lines.push(`M-Pesa Paybill: ${details.paybill_number}`)
-        lines.push(`Account: ${details.account_number}`)
-        break
-      case "bank_transfer":
-        lines.push(`Bank: ${details.bank_name}`)
-        lines.push(`Account: ${details.account_number}`)
-        break
-      case "airtel_money":
-        lines.push(`Airtel Money: ${details.airtel_money_number}`)
-        break
-    }
-
-    return lines.length > 0 ? lines : ["Payment method not configured"]
+  function getPaymentMethods() {
+    if (!trade) return ["Not specified"]
+    const methods = []
+    if (trade.ad_mpesa_number) methods.push(`M-Pesa: ${trade.ad_mpesa_number}`)
+    if (trade.ad_paybill_number) methods.push(`Paybill: ${trade.ad_paybill_number}`)
+    if (trade.ad_airtel_money) methods.push(`Airtel: ${trade.ad_airtel_money}`)
+    if (trade.ad_account_number) methods.push(`Account: ${trade.ad_account_number}`)
+    return methods.length > 0 ? methods : ["Not specified"]
   }
 
   const isBuyer = currentUserId === trade?.buyer_id
@@ -460,11 +423,11 @@ export default function TradePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="glass-card p-6 rounded-xl border border-white/10">
               <p className="text-gray-400 text-sm mb-2">Trade Amount</p>
-              <p className="text-3xl font-bold text-green-400">{trade.gx_amount} AFX</p>
+              <p className="text-3xl font-bold text-green-400">{trade.gx_amount} GX</p>
             </div>
             <div className="glass-card p-6 rounded-xl border border-white/10">
               <p className="text-gray-400 text-sm mb-2">Escrow Amount</p>
-              <p className="text-3xl font-bold text-yellow-400">{trade.escrow_amount} AFX</p>
+              <p className="text-3xl font-bold text-yellow-400">{trade.escrow_amount} GX</p>
             </div>
             <div className="glass-card p-6 rounded-xl border border-white/10">
               <p className="text-gray-400 text-sm mb-2">Status</p>
@@ -512,12 +475,9 @@ export default function TradePage() {
           <div className="glass-card p-8 rounded-xl border border-white/10 mb-6">
             <h3 className="text-xl font-semibold mb-4">Payment Details</h3>
             <div className="space-y-2">
-              {getPaymentMethodDisplay().map((detail, index) => (
-                <p
-                  key={index}
-                  className="text-sm p-3 bg-white/5 rounded-lg border border-emerald-500/20 text-emerald-400"
-                >
-                  {detail}
+              {getPaymentMethods().map((method, index) => (
+                <p key={index} className="text-sm p-3 bg-white/5 rounded-lg">
+                  {method}
                 </p>
               ))}
             </div>
@@ -576,6 +536,7 @@ export default function TradePage() {
             </div>
           </div>
 
+          {/* Action Buttons */}
           {trade.status !== "completed" && trade.status !== "cancelled" && (
             <div className="glass-card p-8 rounded-xl border border-white/10 mb-6">
               <h3 className="text-xl font-semibold mb-4">Actions</h3>
@@ -610,6 +571,7 @@ export default function TradePage() {
             </div>
           )}
 
+          {/* Completed Message */}
           {trade.status === "completed" && (
             <div className="glass-card p-8 bg-green-500/10 border-green-500/20 rounded-xl mb-6">
               <div className="flex items-center gap-3">

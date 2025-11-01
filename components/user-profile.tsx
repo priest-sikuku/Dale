@@ -149,7 +149,7 @@ export function UserProfile() {
         {isEditing && (
           <button
             onClick={handleSave}
-            className="w-full px-4 py-3 rounded-lg btn-primary-afx font-semibold hover:shadow-lg hover:shadow-green-500/50 transition"
+            className="w-full px-4 py-3 rounded-lg btn-primary-gx font-semibold hover:shadow-lg hover:shadow-green-500/50 transition"
           >
             Save Changes
           </button>

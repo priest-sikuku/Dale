@@ -8,8 +8,6 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { createClient } from "@/lib/supabase/client"
 
-export const dynamic = "force-dynamic"
-
 export default function ForgotPassword() {
   const supabase = createClient()
   const [email, setEmail] = useState("")

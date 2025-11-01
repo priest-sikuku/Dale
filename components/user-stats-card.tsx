@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createBrowserClient } from "@supabase/ssr"
-import { Users, DollarSign, TrendingUp, Award, Settings } from "lucide-react"
+import { Users, DollarSign, TrendingUp, Award, Settings, Package } from "lucide-react"
 import Link from "next/link"
 
 interface UserStats {
@@ -12,8 +12,14 @@ interface UserStats {
   total_roi: number
 }
 
+interface SupplyData {
+  remaining_supply: number
+  total_supply: number
+}
+
 export function UserStatsCard() {
   const [stats, setStats] = useState<UserStats | null>(null)
+  const [supply, setSupply] = useState<SupplyData | null>(null)
   const [loading, setLoading] = useState(true)
 
   const supabase = createBrowserClient(
@@ -23,6 +29,7 @@ export function UserStatsCard() {
 
   useEffect(() => {
     fetchUserStats()
+    fetchSupply()
   }, [])
 
   const fetchUserStats = async () => {
@@ -76,6 +83,21 @@ export function UserStatsCard() {
     }
   }
 
+  const fetchSupply = async () => {
+    try {
+      const { data, error } = await supabase.from("supply_tracking").select("*").single()
+
+      if (error) {
+        console.error("[v0] Error fetching supply:", error)
+        return
+      }
+
+      setSupply(data)
+    } catch (error) {
+      console.error("[v0] Error:", error)
+    }
+  }
+
   if (loading) {
     return (
       <div className="glass-card p-8 rounded-2xl border border-white/5">
@@ -118,7 +140,7 @@ export function UserStatsCard() {
           </div>
         </div>
 
-        {/* Commission Earned - CHANGE: Replace GX with AFX */}
+        {/* Commission Earned */}
         <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-500/10 rounded-lg">
@@ -126,7 +148,7 @@ export function UserStatsCard() {
             </div>
             <div>
               <p className="text-sm text-gray-400">Commission Earned</p>
-              <p className="text-xl font-bold">{(stats?.commission_earned ?? 0).toFixed(2)} AFX</p>
+              <p className="text-xl font-bold">{(stats?.commission_earned ?? 0).toFixed(2)} GX</p>
             </div>
           </div>
         </div>
@@ -156,6 +178,21 @@ export function UserStatsCard() {
             <div>
               <p className="text-sm text-gray-400">Reputation</p>
               <p className="text-xl font-bold">{(stats?.rating ?? 0).toFixed(2)} / 5.00</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Remaining Supply */}
+        <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-orange-500/10 rounded-lg">
+              <Package className="w-5 h-5 text-orange-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-400">Remaining GX Supply</p>
+              <p className="text-xl font-bold">
+                {(supply?.remaining_supply ?? 0).toLocaleString()} / {(supply?.total_supply ?? 0).toLocaleString()}
+              </p>
             </div>
           </div>
         </div>
