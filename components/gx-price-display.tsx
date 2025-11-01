@@ -20,7 +20,7 @@ export function AFXPriceDisplay() {
 
   const fetchPrice = async () => {
     try {
-      const response = await fetch("/api/gx-price", {
+      const response = await fetch("/api/afx-price", {
         cache: "no-store",
       })
       const data = await response.json()
@@ -66,7 +66,7 @@ export function AFXPriceDisplay() {
               </div>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-1">Live Price • Updates every 2s</p>
+          <p className="text-xs text-gray-500 mt-1">Live Price</p>
         </div>
         <div className={`p-3 ${bgColor} rounded-lg transition-colors duration-300`}>
           {isIncreasing ? (
@@ -79,8 +79,8 @@ export function AFXPriceDisplay() {
         </div>
       </div>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-gray-400">Base: KES 16.00</span>
-        <span className="text-gray-400">+3% daily @ 3pm</span>
+        <span className="text-gray-400"></span>
+        <span className="text-gray-400"></span>
       </div>
     </div>
   )

@@ -2,7 +2,7 @@ export function FeatureGrid() {
   const features = [
     {
       title: "Auto Growth",
-      description: "Compounds 3% daily to grow holders' balances.",
+      description: "Compounds  daily to grow holders' balances.",
     },
     {
       title: "P2P Trading",

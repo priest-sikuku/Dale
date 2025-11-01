@@ -62,7 +62,7 @@ export function PriceHistoryChart() {
         <div className="p-2 bg-blue-500/10 rounded-lg">
           <TrendingUp className="w-6 h-6 text-blue-400" />
         </div>
-        <h2 className="text-2xl font-bold">GX Price History (5 Days)</h2>
+        <h2 className="text-2xl font-bold">AFX Price History (5 Days)</h2>
       </div>
 
       {history.length === 0 ? (

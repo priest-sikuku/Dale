@@ -47,8 +47,8 @@ export default function Hero() {
           <div className="glass-card p-8 rounded-2xl border border-white/5">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">AfriX — The Coin That Never Sleeps</h1>
             <p className="text-gray-400 text-lg leading-relaxed mb-6">
-              Earn <strong className="text-white">3% daily</strong> growth on your holdings. Trade peer‑to‑peer across
-              Kenya and beyond. Built for continuous growth and community.
+              Earn <strong className="text-white">daily</strong> growth on your holdings. Trade peer‑to‑peer across
+              Africa and beyond. Built for continuous growth and community.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 mb-8">
               <Link
@@ -83,7 +83,7 @@ export default function Hero() {
               </li>
               <li className="flex gap-4">
                 <span className="text-green-400 font-bold flex-shrink-0">3.</span>
-                <span>Hold to compound +3% daily or trade on P2P.</span>
+                <span>Hold to compound daily or trade on P2P.</span>
               </li>
             </ol>
           </div>
