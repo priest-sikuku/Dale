@@ -63,18 +63,33 @@ export async function claimMining() {
     }
 
     // Add coins to user's balance
-    const { error: coinsError } = await supabase.from("coins").insert({
-      user_id: user.id,
-      amount: MINING_AMOUNT,
-      claim_type: "mining",
-      status: "available",
-      created_at: now.toISOString(),
-      updated_at: now.toISOString(),
-    })
+    const { data: coinData, error: coinsError } = await supabase
+      .from("coins")
+      .insert({
+        user_id: user.id,
+        amount: MINING_AMOUNT,
+        claim_type: "mining",
+        status: "available",
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      })
+      .select()
+      .single()
 
     if (coinsError) {
       console.error("[v0] Error adding coins:", coinsError)
       return { success: false, error: "Failed to add coins" }
+    }
+
+    try {
+      await supabase.rpc("add_claim_commission", {
+        p_referred_id: user.id,
+        p_claim_amount: MINING_AMOUNT,
+        p_coin_id: coinData.id,
+      })
+    } catch (commissionError) {
+      console.error("[v0] Error adding claim commission:", commissionError)
+      // Don't fail the mining claim if commission fails
     }
 
     // Log transaction

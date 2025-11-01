@@ -7,9 +7,8 @@ export const dynamic = "force-dynamic"
 async function calculateCurrentPrice() {
   const supabase = await createClient()
 
-  // Get latest reference price
   const { data: latestRef } = await supabase
-    .from("gx_price_references")
+    .from("afx_price_references")
     .select("*")
     .order("reference_date", { ascending: false })
     .limit(1)
@@ -61,15 +60,13 @@ async function calculateCurrentPrice() {
   const maxPrice = latestRef.price * 1.2
   const boundedPrice = Math.max(minPrice, Math.min(maxPrice, currentPrice))
 
-  // Get previous price for comparison
-  const { data: currentPriceData } = await supabase.from("gx_current_price").select("*").single()
+  const { data: currentPriceData } = await supabase.from("afx_current_price").select("*").single()
 
   const previousPrice = currentPriceData?.price || latestRef.price
   const changePercent = ((boundedPrice - previousPrice) / previousPrice) * 100
 
-  // Update current price in database
   await supabase
-    .from("gx_current_price")
+    .from("afx_current_price")
     .update({
       price: boundedPrice.toFixed(2),
       previous_price: previousPrice.toFixed(2),
@@ -79,8 +76,7 @@ async function calculateCurrentPrice() {
     })
     .eq("id", currentPriceData?.id)
 
-  // Store in price history
-  await supabase.from("gx_price_history").insert({
+  await supabase.from("afx_price_history").insert({
     price: boundedPrice.toFixed(2),
     timestamp: new Date().toISOString(),
   })
@@ -100,7 +96,7 @@ export async function GET() {
     const priceData = await calculateCurrentPrice()
     return NextResponse.json(priceData)
   } catch (error) {
-    console.error("[v0] Error calculating GX price:", error)
+    console.error("[v0] Error calculating AFX price:", error)
     return NextResponse.json({ error: "Failed to fetch price" }, { status: 500 })
   }
 }

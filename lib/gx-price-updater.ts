@@ -3,22 +3,21 @@
 import { createClient } from "@/lib/supabase/server"
 
 /**
- * Server action to check and update GX price if needed
+ * Server action to check and update AFX price if needed
  * This should be called periodically from the client (e.g., every 5 minutes)
  */
-export async function checkAndUpdateGXPrice() {
+export async function checkAndUpdateAFXPrice() {
   const supabase = await createClient()
 
   try {
-    // Call the database function that auto-updates if needed
-    const { data, error } = await supabase.rpc("get_current_gx_price_with_auto_update").single()
+    const { data, error } = await supabase.rpc("get_current_afx_price_with_auto_update").single()
 
     if (error) {
-      console.error("[v0] Error checking GX price:", error)
+      console.error("[v0] Error checking AFX price:", error)
       return { success: false, error: error.message }
     }
 
-    console.log("[v0] GX Price check:", {
+    console.log("[v0] AFX Price check:", {
       price: data.price,
       needsUpdate: data.needs_update,
       lastUpdated: data.last_updated,
@@ -32,7 +31,7 @@ export async function checkAndUpdateGXPrice() {
       needsUpdate: data.needs_update,
     }
   } catch (error) {
-    console.error("[v0] Exception in checkAndUpdateGXPrice:", error)
+    console.error("[v0] Exception in checkAndUpdateAFXPrice:", error)
     return { success: false, error: "Failed to check price" }
   }
 }
@@ -40,7 +39,7 @@ export async function checkAndUpdateGXPrice() {
 /**
  * Manually trigger a price update
  */
-export async function manuallyUpdateGXPrice() {
+export async function manuallyUpdateAFXPrice() {
   const supabase = await createClient()
 
   try {
@@ -60,7 +59,10 @@ export async function manuallyUpdateGXPrice() {
       oldPrice: data.old_price,
     }
   } catch (error) {
-    console.error("[v0] Exception in manuallyUpdateGXPrice:", error)
+    console.error("[v0] Exception in manuallyUpdateAFXPrice:", error)
     return { success: false, error: "Failed to update price" }
   }
 }
+
+export { checkAndUpdateAFXPrice as checkAndUpdateGXPrice }
+export { manuallyUpdateAFXPrice as manuallyUpdateGXPrice }

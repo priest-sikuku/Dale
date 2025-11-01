@@ -19,10 +19,10 @@ export default function PostAdPage() {
   const router = useRouter()
   const [adType, setAdType] = useState<"buy" | "sell">("sell")
   const [loading, setLoading] = useState(false)
-  const [currentGXPrice, setCurrentGXPrice] = useState<number>(16)
+  const [currentAFXPrice, setCurrentAFXPrice] = useState<number>(16)
   const [formData, setFormData] = useState({
-    gxAmount: "",
-    pricePerGX: "",
+    afxAmount: "",
+    pricePerAFX: "",
     minAmount: "",
     maxAmount: "",
     accountNumber: "",
@@ -37,21 +37,21 @@ export default function PostAdPage() {
   })
 
   useEffect(() => {
-    const fetchGXPrice = async () => {
+    const fetchAFXPrice = async () => {
       const supabase = createClient()
-      const { data, error } = await supabase.from("gx_current_price").select("price").single()
+      const { data, error } = await supabase.from("afx_current_price").select("price").single()
 
       if (!error && data) {
-        setCurrentGXPrice(data.price)
-        setFormData((prev) => ({ ...prev, pricePerGX: data.price.toString() }))
+        setCurrentAFXPrice(data.price)
+        setFormData((prev) => ({ ...prev, pricePerAFX: data.price.toString() }))
       }
     }
 
-    fetchGXPrice()
+    fetchAFXPrice()
   }, [])
 
-  const minAllowedPrice = (currentGXPrice * 0.96).toFixed(2)
-  const maxAllowedPrice = (currentGXPrice * 1.04).toFixed(2)
+  const minAllowedPrice = (currentAFXPrice * 0.96).toFixed(2)
+  const maxAllowedPrice = (currentAFXPrice * 1.04).toFixed(2)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,14 +60,14 @@ export default function PostAdPage() {
     try {
       const supabase = createClient()
 
-      if (Number.parseFloat(formData.gxAmount) < 50) {
-        alert("Minimum amount to post an ad is 50 GX")
+      if (Number.parseFloat(formData.afxAmount) < 50) {
+        alert("Minimum amount to post an ad is 50 AFX")
         setLoading(false)
         return
       }
 
-      const pricePerGX = Number.parseFloat(formData.pricePerGX)
-      if (pricePerGX < Number.parseFloat(minAllowedPrice) || pricePerGX > Number.parseFloat(maxAllowedPrice)) {
+      const pricePerAFX = Number.parseFloat(formData.pricePerAFX)
+      if (pricePerAFX < Number.parseFloat(minAllowedPrice) || pricePerAFX > Number.parseFloat(maxAllowedPrice)) {
         alert(`Price must be between ${minAllowedPrice} and ${maxAllowedPrice} KES (±4% of current price)`)
         setLoading(false)
         return
@@ -94,8 +94,8 @@ export default function PostAdPage() {
       if (adType === "sell") {
         const { data, error } = await supabase.rpc("post_sell_ad_with_escrow", {
           p_user_id: user.id,
-          p_gx_amount: Number.parseFloat(formData.gxAmount),
-          p_price_per_gx: pricePerGX,
+          p_afx_amount: Number.parseFloat(formData.afxAmount),
+          p_price_per_afx: pricePerAFX,
           p_min_amount: Number.parseFloat(formData.minAmount),
           p_max_amount: Number.parseFloat(formData.maxAmount),
           p_account_number: formData.accountNumber || null,
@@ -119,9 +119,9 @@ export default function PostAdPage() {
           .insert({
             user_id: user.id,
             ad_type: adType,
-            gx_amount: Number.parseFloat(formData.gxAmount),
-            remaining_amount: Number.parseFloat(formData.gxAmount),
-            price_per_gx: pricePerGX,
+            afx_amount: Number.parseFloat(formData.afxAmount),
+            remaining_amount: Number.parseFloat(formData.afxAmount),
+            price_per_afx: pricePerAFX,
             min_amount: Number.parseFloat(formData.minAmount),
             max_amount: Number.parseFloat(formData.maxAmount),
             account_number: paymentMethodsString || null,
@@ -162,7 +162,7 @@ export default function PostAdPage() {
 
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">Post an Ad</h1>
-            <p className="text-gray-400">Create a buy or sell ad for GX coins (Minimum: 50 GX)</p>
+            <p className="text-gray-400">Create a buy or sell ad for AFX coins (Minimum: 50 AFX)</p>
           </div>
 
           <form onSubmit={handleSubmit} className="glass-card p-8 rounded-xl border border-white/10 space-y-6">
@@ -176,53 +176,53 @@ export default function PostAdPage() {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="buy" id="buy" />
                   <Label htmlFor="buy" className="cursor-pointer">
-                    Buy GX
+                    Buy AFX
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="sell" id="sell" />
                   <Label htmlFor="sell" className="cursor-pointer">
-                    Sell GX
+                    Sell AFX
                   </Label>
                 </div>
               </RadioGroup>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="gxAmount">Amount of GX * (Minimum: 50 GX)</Label>
+              <Label htmlFor="afxAmount">Amount of AFX * (Minimum: 50 AFX)</Label>
               <Input
-                id="gxAmount"
+                id="afxAmount"
                 type="number"
                 step="0.01"
                 min="50"
-                placeholder="Enter GX amount (min 50)"
-                value={formData.gxAmount}
-                onChange={(e) => setFormData({ ...formData, gxAmount: e.target.value })}
+                placeholder="Enter AFX amount (min 50)"
+                value={formData.afxAmount}
+                onChange={(e) => setFormData({ ...formData, afxAmount: e.target.value })}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pricePerGX">Price per GX (KES) *</Label>
+              <Label htmlFor="pricePerAFX">Price per AFX (KES) *</Label>
               <Input
-                id="pricePerGX"
+                id="pricePerAFX"
                 type="number"
                 step="0.01"
                 min={minAllowedPrice}
                 max={maxAllowedPrice}
                 placeholder={`Between ${minAllowedPrice} - ${maxAllowedPrice} KES`}
-                value={formData.pricePerGX}
-                onChange={(e) => setFormData({ ...formData, pricePerGX: e.target.value })}
+                value={formData.pricePerAFX}
+                onChange={(e) => setFormData({ ...formData, pricePerAFX: e.target.value })}
                 required
               />
               <p className="text-xs text-gray-400">
-                Current GX price: {currentGXPrice} KES. Allowed range: {minAllowedPrice} - {maxAllowedPrice} KES (±4%)
+                Current AFX price: {currentAFXPrice} KES. Allowed range: {minAllowedPrice} - {maxAllowedPrice} KES (±4%)
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="minAmount">Min Amount (GX) * (Minimum: 2 GX)</Label>
+                <Label htmlFor="minAmount">Min Amount (AFX) * (Minimum: 2 AFX)</Label>
                 <Input
                   id="minAmount"
                   type="number"
@@ -235,7 +235,7 @@ export default function PostAdPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxAmount">Max Amount (GX) *</Label>
+                <Label htmlFor="maxAmount">Max Amount (AFX) *</Label>
                 <Input
                   id="maxAmount"
                   type="number"
@@ -338,9 +338,9 @@ export default function PostAdPage() {
           <div className="mt-8 glass-card p-8 rounded-xl border border-blue-500/30 bg-blue-500/10">
             <h3 className="font-bold text-white mb-4">Tips for Creating Successful Ads</h3>
             <ul className="space-y-2 text-sm text-gray-300">
-              <li>Minimum posting amount: 50 GX</li>
-              <li>Minimum trade amount: 2 GX</li>
-              <li>Price must be within ±4% of current GX price</li>
+              <li>Minimum posting amount: 50 AFX</li>
+              <li>Minimum trade amount: 2 AFX</li>
+              <li>Price must be within ±4% of current AFX price</li>
               <li>Set competitive prices to attract more traders</li>
               <li>Provide multiple payment methods for flexibility</li>
               <li>Write clear terms to avoid misunderstandings</li>
